@@ -43,14 +43,14 @@ jobs:
 
     # Upload the output log as an artifact
     - name: Upload apollo output log
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: apollo-log
         path: apollo_output.log
 
     # Upload all files in the Apollo/Product directory as an artifact
     - name: Upload final files
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: kernel-apollo-final
         path: Apollo/Product/**
