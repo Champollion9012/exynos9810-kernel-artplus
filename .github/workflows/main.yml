@@ -1,56 +1,52 @@
 name: Compile Kernel
 
-# COMET Worfklow [240904]
-# by mrcxlinux
-
-# this workflow is meant to build "Apollo Kernel" for 9810
-# to change build options go to "BUILD_KERNEL" in apollo.sh
-
-# Default options:
-# CR_TARGET=3 
-# CR_COMPILER=3 (clang 18)
-# TC_DL="y" (download toolchain)
-# CR_SELINUX=0 (enforcing)
-# CR_KSU="y" (enabled)
-# CR_CLEAN="n" (clean -> dirty build)
-# CR_MKZIP="y" (build zip)
-
-on: [push]
+# Triggers: Run on push or manually via the Actions tab
+on: [push, workflow_dispatch]
 
 jobs:
   build:
+    name: Build Kernel
     runs-on: ubuntu-latest
 
     steps:
+    # 1. Checkout the code
     - name: Checkout code
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
 
+    # 2. Install necessary dependencies for kernel compilation
     - name: Install dependencies
-      run: sudo apt-get update && sudo apt-get install -y zip bsdiff tar xz-utils build-essential
-
-    - name: Run apollo.sh
-      id: run_apollo
-      run: mkdir Apollo/Out | ./apollo.sh -cli 2>&1 | tee apollo_output.log
-
-    - name: Check script status
       run: |
-        if grep -q "Aborting" apollo_output.log; then
-          echo "Aborting found in output, failing the job"
-          exit 1
-        else
-          echo "No 'Aborting' found, job succeeded"
-        fi
+        sudo apt-get update
+        sudo apt-get install -y git build-essential bc bison flex libssl-dev libncurses5-dev libelf-dev
 
-    # Upload the output log as an artifact
-    - name: Upload apollo output log
+    # 3. Run the build script
+    - name: Run build_s9plus_kernel.sh
+      id: build_kernel
+      run: |
+        # Ensure the script is executable
+        chmod +x build_s9plus_kernel.sh
+        
+        # Run the script and pipe output to both console and log file
+        echo "Starting build process..."
+        ./build_s9plus_kernel.sh 2>&1 | tee build.log
+
+    # 4. Upload the build log for debugging
+    - name: Upload Build Log
+      if: always() # Upload log even if the build fails
       uses: actions/upload-artifact@v4
       with:
-        name: apollo-log
-        path: apollo_output.log
+        name: build-log
+        path: build.log
 
-    # Upload all files in the Apollo/Product directory as an artifact
-    - name: Upload final files
+    # 5. Upload the compiled kernel files
+    # Note: Verify the 'path' matches where your script outputs the files.
+    - name: Upload Kernel Artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: kernel-apollo-final
-        path: Apollo/Product/**
+        name: exynos9810-kernel
+        path: |
+          out/arch/arm64/boot/Image
+          out/arch/arm64/boot/Image.gz
+          out/arch/arm64/boot/Image.gz-dtb
+          out/arch/arm64/boot/dtbo.img
+          *.zip
