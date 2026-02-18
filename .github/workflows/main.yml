@@ -18,8 +18,24 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get install -y git build-essential bc bison flex libssl-dev libncurses5-dev libelf-dev
+    # 3. Install Compiler
+    - name: Setup Toolchain (Clang 20 r547379)
+      run: |
+        echo "Setting up Clang 20..."
+        # Create directory one level up as expected by apollo.sh
+        mkdir -p ../compiler
+        
+        # Download Clang 20 archive
+        wget -q https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86/+archive/refs/heads/main/clang-r547379.tar.gz -O clang.tar.gz
+        
+        # Create the specific directory the script looks for (Option 4)
+        mkdir -p ../compiler/clang-20.0.0-r547379
+        
+        # Extract
+        tar -xf clang.tar.gz -C ../compiler/clang-20.0.0-r547379
+        echo "Toolchain ready."
 
-    # 3. Run the build script
+    # 4. Run the build script
     - name: Run build_s9plus_kernel.sh
       id: build_kernel
       run: |
