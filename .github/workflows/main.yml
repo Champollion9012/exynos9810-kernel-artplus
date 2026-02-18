@@ -1,0 +1,56 @@
+name: Compile Kernel
+
+# COMET Worfklow [240904]
+# by mrcxlinux
+
+# this workflow is meant to build "Apollo Kernel" for 9810
+# to change build options go to "BUILD_KERNEL" in apollo.sh
+
+# Default options:
+# CR_TARGET=3 
+# CR_COMPILER=3 (clang 18)
+# TC_DL="y" (download toolchain)
+# CR_SELINUX=0 (enforcing)
+# CR_KSU="y" (enabled)
+# CR_CLEAN="n" (clean -> dirty build)
+# CR_MKZIP="y" (build zip)
+
+on: [push]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Install dependencies
+      run: sudo apt-get update && sudo apt-get install -y zip bsdiff tar xz-utils build-essential
+
+    - name: Run apollo.sh
+      id: run_apollo
+      run: mkdir Apollo/Out | ./apollo.sh -cli 2>&1 | tee apollo_output.log
+
+    - name: Check script status
+      run: |
+        if grep -q "Aborting" apollo_output.log; then
+          echo "Aborting found in output, failing the job"
+          exit 1
+        else
+          echo "No 'Aborting' found, job succeeded"
+        fi
+
+    # Upload the output log as an artifact
+    - name: Upload apollo output log
+      uses: actions/upload-artifact@v3
+      with:
+        name: apollo-log
+        path: apollo_output.log
+
+    # Upload all files in the Apollo/Product directory as an artifact
+    - name: Upload final files
+      uses: actions/upload-artifact@v3
+      with:
+        name: kernel-apollo-final
+        path: Apollo/Product/**
