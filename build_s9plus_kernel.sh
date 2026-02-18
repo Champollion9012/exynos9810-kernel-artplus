@@ -10,7 +10,7 @@ ARCH=arm64
 PROFILE="${PROFILE:-exynos9810_star2_kor}"
 JOBS="${JOBS:-$(nproc)}"
 # Use existing compiler path or default
-CR_CLANG="${CR_CLANG:-/home/j/compiler/clang-20.0.0-r547379}"
+CR_CLANG="${CR_CLANG:-../compiler/clang-20.0.0-r547379}"
 
 # Packaging configuration (Referencing Apollo.sh structure)
 CR_AIK="$KERNEL_DIR/Apollo/A.I.K"
